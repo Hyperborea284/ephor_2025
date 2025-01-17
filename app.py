@@ -5,9 +5,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-
 from flask import Flask, request, render_template, jsonify
-
 from dotenv import load_dotenv
 
 # Módulos do projeto
@@ -17,9 +15,6 @@ from modules.goose_scraper import scrape_links
 from modules.timeline_generator import TimelineGenerator, TimelineParser
 from modules.entity_finder import EntityClassifier, process_text
 from modules.prospect import TextProcessor, ScenarioClassifier
-
-
-# db_manager
 from modules.db_manager import (
     get_db_path,
     create_db_if_not_exists,
