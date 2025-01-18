@@ -2,7 +2,6 @@ from openai import OpenAI
 from summarizer import Summarizer
 import os
 from dotenv import load_dotenv
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 import numpy as np
 from goose3 import Goose
@@ -259,7 +258,7 @@ if __name__ == "__main__":
     resumo, topicos = text_processor.process_text()
 
     # Classificar entidades e gerar cenários
-    classifier = EntityClassifier(resumo, topicos, combined_text)
+    classifier = ScenarioClassifier(resumo, topicos, combined_text)
     prompt = classifier.generate_prompt()
     conteudo = classifier.call_openai_api(prompt)
 

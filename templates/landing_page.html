@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landing Page</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Bem-vindo à Landing Page</h1>
+        {% if user.is_authenticated %}
+            <p>Olá, {{ user.username }}! Você está logado.</p>
+            <a href="{% url 'instance_list' %}">Ir para o Blog</a>
+            <a href="{% url 'account_logout' %}">Sair</a>
+        {% else %}
+            <p>Você não está logado.</p>
+            <a href="{% url 'account_login' %}">Entrar</a>
+            <a href="{% url 'account_signup' %}">Cadastrar</a>
+        {% endif %}
+    </div>
+</body>
+</html>

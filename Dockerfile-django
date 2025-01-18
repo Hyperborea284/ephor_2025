@@ -1,0 +1,32 @@
+# Dockerfile-django
+FROM python:latest
+
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    default-jdk \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+RUN pip install --upgrade pip
+
+# Copia os requisitos e instala as dependências
+COPY requirements_django.txt .
+RUN pip install --no-cache-dir -r requirements_django.txt
+
+# Copia o código da aplicação
+COPY . .
+
+# Copia o entrypoint e o uwsgi.ini
+COPY entrypoint-django.sh /app/entrypoint-django.sh
+COPY uwsgi.ini /app/uwsgi.ini
+
+# Torna o entrypoint executável
+RUN chmod +x /app/entrypoint-django.sh
+
+# Expõe a porta 8000 (padrão do Django)
+EXPOSE 8000
+
+# Comando para rodar o entrypoint
+CMD ["/app/entrypoint-django.sh"]
