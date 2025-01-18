@@ -1,13 +1,49 @@
 version: '3.8'
 
+volumes:
+  staticfiles:   # Named volume para armazenar /app/staticfiles do Django
+
 services:
   django:
     build:
       context: .
       dockerfile: Dockerfile-django
+    # O Django pode rodar somente internamente, 
+    # se você quiser que apenas o Nginx faça o proxy
+    # Então, se desejar expor diretamente, inclua: 
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - .:/app      # Monta o código local (opcional, se estiver desenvolvendo)
+      - staticfiles:/app/staticfiles  # Monta o named volume
+      - /var/run/docker.sock:/var/run/docker.sock  # se o Django precisa gerenciar containers Docker
     environment:
       - FLASK_SERVICE_URL=http://flask:5000
+    # Se quiser iniciar somente após Flask ou algo do tipo, use depends_on
+    depends_on:
+      - flask
+
+  flask:
+    build:
+      context: .
+      dockerfile: Dockerfile-flask
+    # Exemplo: se quiser rodar internamente
+    expose:
+      - "5000"
+    # Se quiser debugging local, pode mapear: "5000:5000"
+    volumes:
+      - .:/app
+    # environment e depende do seu projeto
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile-nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - django
+    volumes:
+      - staticfiles:/usr/share/nginx/html/static
+      # Monta o volume de staticfiles em /usr/share/nginx/html/static
+      # Assim, o Nginx vai servir /static/ do volume.

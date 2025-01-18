@@ -13,40 +13,33 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Diretório base do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Defina o diretório para coletar arquivos estáticos
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
+# Chave secreta (não usar em produção)
 SECRET_KEY = 'django-insecure-man)2xatd%#8fpu*5=m()hy(c$eeqel5qk(=7#n62iz64aer2t'
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# Modo debug (não usar em produção)
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
-# Application definition
-
+# Aplicativos instalados
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes', 
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.sites', 
+    'django.contrib.sites',
+    'django.contrib.staticfiles',   # Para servir arquivos estáticos
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'blog', 
 ]
 
+# Middlewares
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -55,7 +48,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware', 
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'ephor_2025.urls'
@@ -78,10 +71,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ephor_2025.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
+# Banco de dados (SQLite por padrão)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -89,10 +79,7 @@ DATABASES = {
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
+# Validações de senha
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -108,29 +95,20 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-
+# Configurações de localização
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
+# Arquivos estáticos
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = 'static/'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
-
+# ID de campo padrão para chaves primárias
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Autenticação
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -138,6 +116,5 @@ AUTHENTICATION_BACKENDS = [
 
 SITE_ID = 1
 
-
-LOGIN_REDIRECT_URL = 'post_list'  # Redireciona para a lista de postagens (blog)
-ACCOUNT_LOGOUT_REDIRECT_URL = 'landing_page'  # Página para redirecionar após o logout
+LOGIN_REDIRECT_URL = 'instance_list'  
+ACCOUNT_LOGOUT_REDIRECT_URL = 'landing_page'

@@ -1,28 +1,32 @@
 # Dockerfile-flask
-FROM python:latest
+FROM python:3.11-slim
+
+# Instalar dependências básicas para compilar eventuais pacotes
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-RUN python3 install spacy
+# Instala spaCy e demais dependências
+# (aqui você pode instalar TUDO que precisa, inclusive requirements_flask.txt depois)
+RUN pip install --no-cache-dir spacy
 RUN python -m spacy download pt_core_news_sm
-RUN python3 -m spacy download en_core_web_sm
+RUN python -m spacy download en_core_web_sm
 
-# Copia os requisitos e instala as dependências
+# Copia o requirements e instala demais libs do Flask
 COPY requirements_flask.txt .
 RUN pip install --no-cache-dir -r requirements_flask.txt
 
-# Copia o código da aplicação
+# Copia o restante do seu código
 COPY . .
 
-# Copia o entrypoint e o uwsgi.ini
-COPY entrypoint-django.sh /app/entrypoint-flask.sh
-COPY uwsgi.ini /app/uwsgi.ini
-
-# Torna o entrypoint executável
+# Ajuste seu entrypoint, se for o caso
+COPY entrypoint-flask.sh /app/entrypoint-flask.sh
 RUN chmod +x /app/entrypoint-flask.sh
 
-# Expõe a porta 5000 (padrão do Flask)
+# Porta default do Flask
 EXPOSE 5000
 
-# Comando para rodar o uWSGI
+# Se quiser usar uWSGI, mantenha seu uwsgi.ini
 CMD ["uwsgi", "--ini", "uwsgi.ini"]
