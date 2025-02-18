@@ -14,7 +14,8 @@
         <ul>
             {% for instance in instances %}
             <li class="entidade">
-                <strong>{{ instance.name }}</strong>
+                <strong>{{ instance.name }}</strong>  <!-- Nome do usuário -->
+                <small>(Executando na porta {{ instance.port }})</small> <!-- Exibe a porta -->
                 <a href="{% url 'start_instance' instance.pk %}">Iniciar</a>
                 <a href="{% url 'stop_instance' instance.pk %}">Parar</a>
                 <a href="{% url 'view_instance' instance.pk %}">Visualizar</a>

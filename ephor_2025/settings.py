@@ -22,21 +22,22 @@ SECRET_KEY = 'django-insecure-man)2xatd%#8fpu*5=m()hy(c$eeqel5qk(=7#n62iz64aer2t
 # Modo debug (não usar em produção)
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# Hosts permitidos
+ALLOWED_HOSTS = ['ephor.com.br', 'localhost', '127.0.0.1', '192.168.0.14', '172.30.0.3']
 
 # Aplicativos instalados
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
-    'django.contrib.contenttypes', 
+    'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.sites',
-    'django.contrib.staticfiles',   # Para servir arquivos estáticos
+    'django.contrib.staticfiles',  # Para servir arquivos estáticos
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'blog', 
+    'blog',
 ]
 
 # Middlewares
@@ -51,12 +52,14 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
 ]
 
+# Configuração de URLs
 ROOT_URLCONF = 'ephor_2025.urls'
 
+# Configuração de templates
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')], 
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -69,6 +72,7 @@ TEMPLATES = [
     },
 ]
 
+# Configuração do WSGI
 WSGI_APPLICATION = 'ephor_2025.wsgi.application'
 
 # Banco de dados (SQLite por padrão)
@@ -103,7 +107,13 @@ USE_TZ = True
 
 # Arquivos estáticos
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Diretório onde os arquivos estáticos serão coletados
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # Diretório para arquivos estáticos personalizados
+]
+
+# Usar ManifestStaticFilesStorage para evitar conflitos de arquivos duplicados
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
 # ID de campo padrão para chaves primárias
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -114,7 +124,22 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
+# Configuração do site para django-allauth
 SITE_ID = 1
 
-LOGIN_REDIRECT_URL = 'instance_list'  
+# Redirecionamentos de login e logout
+LOGIN_REDIRECT_URL = 'instance_list'
 ACCOUNT_LOGOUT_REDIRECT_URL = 'landing_page'
+
+CSRF_TRUSTED_ORIGINS = ['https://ephor.com.br',]
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
+# Configuração de envio de e-mails via Postfix no Docker
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'postfix'  # MESMO nome do serviço acima
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'no-reply@ephor.com.br'
+EMAIL_HOST_PASSWORD = 'suasenha'
+DEFAULT_FROM_EMAIL = 'no-reply@ephor.com.br'

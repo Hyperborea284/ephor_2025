@@ -1,0 +1,43 @@
+# Usar Debian como base
+FROM debian:latest
+
+# Criar usuário e grupo opendkim antes da instalação
+RUN groupadd -r opendkim && useradd -r -g opendkim -s /usr/sbin/nologin opendkim
+
+# Instalar os pacotes necessários + 'procps' (para 'ps') caso o script do OpenDKIM use
+RUN apt update && apt install -y \
+    postfix \
+    postfix-pcre \
+    opendkim \
+    opendkim-tools \
+    libsasl2-modules \
+    mailutils \
+    procps \
+    --no-install-recommends && \
+    apt clean
+
+# Criar /etc/mailname para evitar erro "cannot open file: No such file or directory" no Postfix
+RUN echo "mail.ephor.com.br" > /etc/mailname
+
+# Criar diretório para chaves DKIM (será montado da VM)
+RUN mkdir -p /etc/opendkim/keys/ephor.com.br
+
+# Copiar arquivos de configuração do OpenDKIM e Postfix
+COPY opendkim.conf /etc/opendkim.conf
+COPY opendkim /etc/default/opendkim
+COPY postfix-main.cf /etc/postfix/main.cf
+
+# (Opcional) Checagem de chaves DKIM não é recomendável em tempo de build
+# pois serão montadas em runtime.
+# Removemos o bloco que tenta "chown" e "chmod" aqui, pois eles falharão
+# se o volume estiver em :ro ou se as chaves forem ausentes.
+
+# Criar diretório de logs do Postfix (opcional, mas não haverá rsyslog)
+RUN mkdir -p /var/log/mail && chown postfix:postfix /var/log/mail
+
+# Expor portas SMTP e SMTPS
+EXPOSE 25 587 465
+
+# Comando de inicialização do Postfix e OpenDKIM (SEM rsyslog)
+# Usamos 'tail -f /dev/null' para manter o container rodando indefinidamente.
+CMD service opendkim start && service postfix start && tail -f /dev/null

@@ -1,0 +1,10 @@
+SOCKET="inet:8891@localhost"
+USER=opendkim
+GROUP=opendkim
+PIDFILE=/var/run/opendkim/opendkim.pid
+
+# Diretório de chaves DKIM
+RUNDIR=/var/spool/postfix/opendkim
+KEYTABLE=/etc/opendkim/key.table
+SIGNINGTABLE=/etc/opendkim/signing.table
+TRUSTEDHOSTS=/etc/opendkim/trusted.hosts

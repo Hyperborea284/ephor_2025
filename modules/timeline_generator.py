@@ -259,7 +259,7 @@ class TimelineValidator:
                     Preserve ipsis literis, todos os conteúdos acerca dos eventos e eras apresentados,
                     em situação nenhuma remova, omita, ou diminua estes conteúdos.
                     Manipule apenas a estrutura do arquivo xml.
-                    Aqui está o XML incorreto para referência:
+                    Aqui está o XML incorreto para referência:  
                     {timeline_xml}
                     """
                     print("\n--- Prompt de Correção Enviado para a API ---")
