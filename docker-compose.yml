@@ -1,4 +1,3 @@
-# Remover "version" se aparecer aviso de obsoleto
 services:
   django:
     build:
@@ -9,13 +8,22 @@ services:
       - .:/app
       - staticfiles:/app/staticfiles
     environment:
-      - EMAIL_HOST=postfix        # Usa "postfix" (nome do serviço, não container_name)
+      - EMAIL_HOST=postfix
       - EMAIL_PORT=587
       - EMAIL_USE_TLS=True
       - EMAIL_HOST_USER=no-reply@ephor.com.br
-      - EMAIL_HOST_PASSWORD=SUASENHA
+      - EMAIL_HOST_PASSWORD=xH3xD7jL6vX5sZ3n
+      - DJANGO_SUPERUSER_PASSWORD=zH23yA16cL2yqA76wW622jK5rrsQ
+      - DJANGO_SUPERUSER_EMAIL=jhs.importa@gmail.com
+      - DJANGO_SETTINGS_MODULE=ephor_2025.settings 
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     networks:
-      - app_network
+      app_network:
+        ipv4_address: 172.18.0.10
+    depends_on:
+      - postfix
     ports:
       - "8000:8000"
 
@@ -25,11 +33,15 @@ services:
       dockerfile: Dockerfile-nginx
     container_name: nginx_app
     volumes:
-      - staticfiles:/usr/share/nginx/html/static
+      - staticfiles:/usr/share/nginx/html/static:ro
     depends_on:
       - django
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     networks:
-      - app_network
+      app_network:
+        ipv4_address: 172.18.0.20
     ports:
       - "8080:80"
 
@@ -37,15 +49,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-postfix
-    container_name: postfix  # Nome fixo para o container
+    container_name: postfix
     restart: always
     volumes:
       - /opt/opendkim/keys/ephor.com.br:/etc/opendkim/keys/ephor.com.br:ro
       - ./opendkim.conf:/etc/opendkim.conf:ro
       - ./opendkim:/etc/default/opendkim:ro
       - ./postfix-main.cf:/etc/postfix/main.cf:ro
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     networks:
-      - app_network
+      app_network:
+        ipv4_address: 172.18.0.30
     ports:
       - "25:25"
       - "465:465"
@@ -54,6 +70,9 @@ services:
 networks:
   app_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
 
 volumes:
   staticfiles:

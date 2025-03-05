@@ -26,11 +26,15 @@ RUN mkdir -p /etc/opendkim/keys/ephor.com.br
 COPY opendkim.conf /etc/opendkim.conf
 COPY opendkim /etc/default/opendkim
 COPY postfix-main.cf /etc/postfix/main.cf
+COPY master.cf /etc/postfix/master.cf
 
 # (Opcional) Checagem de chaves DKIM não é recomendável em tempo de build
 # pois serão montadas em runtime.
 # Removemos o bloco que tenta "chown" e "chmod" aqui, pois eles falharão
 # se o volume estiver em :ro ou se as chaves forem ausentes.
+
+# RUN echo "nameserver 1.1.1.1" > /etc/resolv.conf && \
+#    echo "nameserver 8.8.8.8" >> /etc/resolv.conf
 
 # Criar diretório de logs do Postfix (opcional, mas não haverá rsyslog)
 RUN mkdir -p /var/log/mail && chown postfix:postfix /var/log/mail

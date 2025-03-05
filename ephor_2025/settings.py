@@ -23,7 +23,7 @@ SECRET_KEY = 'django-insecure-man)2xatd%#8fpu*5=m()hy(c$eeqel5qk(=7#n62iz64aer2t
 DEBUG = True
 
 # Hosts permitidos
-ALLOWED_HOSTS = ['ephor.com.br', 'localhost', '127.0.0.1', '192.168.0.14', '172.30.0.3']
+ALLOWED_HOSTS = ['ephor.com.br', 'localhost', '127.0.0.1', '192.168.0.14', '172.30.0.3', '160.20.206.150']
 
 # Aplicativos instalados
 INSTALLED_APPS = [

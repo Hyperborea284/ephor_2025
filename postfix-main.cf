@@ -11,7 +11,7 @@ smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated defer_una
 myhostname = mail.ephor.com.br
 myorigin = /etc/mailname
 mydestination = localhost
-mynetworks = 127.0.0.0/8 [::1]/128 172.17.0.0/16 172.30.0.0/16
+mynetworks = 127.0.0.0/8 [::1]/128 172.17.0.0/16 172.18.0.0/16 172.30.0.0/16
 relayhost =
 mailbox_size_limit = 0
 recipient_delimiter = +
@@ -19,16 +19,8 @@ inet_interfaces = all
 inet_protocols = ipv4
 smtpd_recipient_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination
 
-
-
 milter_protocol = 2
 milter_default_action = accept
 smtpd_milters = inet:localhost:8891
 non_smtpd_milters = inet:localhost:8891
 
-# Seção para a porta 587 (submission)
-submission inet n       -       y       -       -       smtpd
-  -o syslog_name=postfix/submission
-  -o smtpd_tls_security_level=encrypt
-  -o smtpd_sasl_auth_enable=yes
-  -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject

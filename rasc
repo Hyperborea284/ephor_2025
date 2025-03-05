@@ -95,3 +95,68 @@ class FlaskInstance(models.Model):
 
     def __str__(self):
         return self.name
+
+
+table inet filter {
+    chain input {
+        type filter hook input priority filter; policy drop;
+        
+        iif "lo" accept
+        ct state established,related accept
+        ip protocol icmp accept
+
+        # Serviços WAN permitidos na br0
+        iifname "br0" tcp dport 22 accept            
+        iifname "br0" udp dport 1194 accept          
+        iifname "br0" udp dport 4747 accept          
+        iifname "br0" tcp dport 1714-1768 accept     
+        iifname "br0" udp dport 1714-1768 accept     
+        iifname "br0" udp dport 9 accept            
+        iifname "br0" tcp dport 24800 accept        
+
+        # HTTP e HTTPS no host
+        iifname "br0" tcp dport { 80, 443 } accept
+
+        # Permitir tráfego para VM em 192.168.0.14 (incluindo 8000)
+        iifname "br0" ip daddr 192.168.0.14 tcp dport { 8000, 8080, 8443 } accept
+
+        # Rede interna br1 - abrindo portas específicas (SSH, DNS, DHCP, NFS)
+        # (descomente e adicione as portas de NFS conforme necessidade)
+        iifname "br1" udp dport { 53, 67, 111, 2049, 20048 } accept
+        iifname "br1" tcp dport { 22, 53, 111, 2049, 20048 } accept
+    }
+
+    chain forward {
+        type filter hook forward priority filter; policy accept;
+
+        iifname "br0" oifname "enp7s0" accept
+        oifname "br0" iifname "enp7s0" accept
+
+        # Comunicação interna (mantido comentado, se não desejar liberar tudo)
+        iifname "br1" accept
+        oifname "br1" accept
+        iifname "br0" oifname "br1" accept
+        iifname "br1" oifname "br0" accept
+
+        # Permitir tráfego para a VM (HTTP e HTTPS) + porta 8000
+        iifname "br0" ip daddr 192.168.0.14 tcp dport { 8000, 8080, 8443 } accept
+        iifname "br1" ip saddr 192.168.0.14 tcp dport { 8000, 8080, 8443 } accept
+    }
+
+    chain output {
+        type filter hook output priority filter; policy accept;
+
+        # Permitir saída para tráfego essencial na br1 (conforme necessidade)
+        oifname "br1" ip daddr 192.168.0.14 tcp dport { 8080, 8443 } accept
+    }
+}
+
+
+
+
+
+
+
+
+
+rm /usr/local/bin/update_nftables_docker.py ; nano /usr/local/bin/update_nftables_docker.py ; chmod +x /usr/local/bin/update_nftables_docker.py ; nft flush ruleset ; rm /etc/nftables.conf ; nano /etc/nftables.conf ; nft -f /etc/nftables.conf ; systemctl restart nftables ; nft list ruleset ; systemctl status nftables ; docker system prune -a ; docker network create --driver=bridge --subnet=172.18.0.0/16 app_network ; docker network inspect app_network ; docker network list ; ip addr show ; cat /usr/local/bin/update_nftables_docker.py ; /usr/local/bin/update_nftables_docker.py ; nft list ruleset ; cat /etc/nftables.conf ; docker-compose up --build  
