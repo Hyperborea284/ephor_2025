@@ -1,0 +1,32 @@
+smtpd_banner = $myhostname ESMTP
+biff = no
+append_dot_mydomain = no
+readme_directory = no
+
+smtpd_use_tls = yes
+smtpd_tls_cert_file = /etc/ssl/certs/ssl-cert-snakeoil.pem
+smtpd_tls_key_file = /etc/ssl/private/ssl-cert-snakeoil.key
+smtpd_tls_security_level = may
+smtpd_tls_loglevel = 1
+smtpd_tls_received_header = yes
+
+smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated defer_unauth_destination
+smtpd_recipient_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination
+
+smtpd_milters = inet:172.18.0.30:8891
+non_smtpd_milters = inet:172.18.0.30:8891
+milter_protocol = 6
+milter_default_action = accept
+
+myhostname = mail.ephor.com.br
+myorigin = /etc/mailname
+mydestination = localhost
+mynetworks = 127.0.0.0/8 [::1]/128 172.17.0.0/16 172.18.0.0/16 172.30.0.0/16
+relayhost =
+
+mailbox_size_limit = 0
+recipient_delimiter = +
+inet_interfaces = all
+inet_protocols = ipv4
+
+maillog_file = /var/log/mail.log

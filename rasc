@@ -1,162 +1,193 @@
-Considere uma aplicação django a qual precisa ativar microsserviços flask em cada uma das ativações de uma instância, e deverá entregar o conteúdo deste para a visualização; este microsserviço flask rodará dentro de um container docker, ao mesmo tempo, a aplicação django já roda num container docker e é servida via ngix e uwsgi, e outros containers flask deverão ser iniciados na criação/destruição/reativação de cada instância flask e serão servidos pelo django; no contexto atual o django espera em localhost:5000 o conteúdo do container flask; cada container flask deve ter uma identificação única somando o nome dadopelo usuário e uma string aleatória única; partindo daqui, depure e indique onde buscar mais informações sobre esta integração.
+atualmente temos estas configurações no projeto analise-as linha por linha e indique se etão nos locais corretas, se são necessárias e como devem convergir para garantir a conectividade pretendida
 
-forms.py
-from django import forms
-from .models import FlaskInstance
-
-class FlaskInstanceForm(forms.ModelForm):
-    class Meta:
-        model = FlaskInstance
-        fields = ['name']  # Campos editáveis pelo usuário
-
-views.py
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from .models import FlaskInstance
-from .forms import FlaskInstanceForm
-import docker
-
-def landing_page(request):
-    return render(request, 'landing_page.html')
-
-@login_required
-def instance_list(request):
-    instances = FlaskInstance.objects.filter(user=request.user)
-    return render(request, 'blog/instance_list.html', {'instances': instances})
-
-@login_required
-def create_instance(request):
-    if request.method == 'POST':
-        form = FlaskInstanceForm(request.POST)
-        if form.is_valid():
-            instance = form.save(commit=False)
-            instance.user = request.user
-            instance.save()
-            messages.success(request, "Instância criada com sucesso!")
-            return redirect('instance_list')
-    else:
-        form = FlaskInstanceForm()
-    return render(request, 'blog/instance_form.html', {'form': form})
-
-@login_required
-def start_instance(request, pk):
-    try:
-        client = docker.from_env()
-        instance = get_object_or_404(FlaskInstance, pk=pk, user=request.user)
-        if not instance.container_id:
-            container = client.containers.run(
-                'sua-imagem-flask',  # Nome da imagem Docker da aplicação Flask
-                detach=True,  # Executa o container em segundo plano
-                name=f"flask-instance-{instance.pk}",  # Nome único para o container
-                ports={'5000/tcp': 5000}  # Expõe a porta 5000
-            )
-            instance.container_id = container.id
-            instance.save()
-            messages.success(request, "Instância iniciada com sucesso!")
-        else:
-            messages.warning(request, "A instância já está em execução.")
-    except docker.errors.DockerException as e:
-        messages.error(request, f"Erro ao iniciar a instância: {e}")
-    return redirect('instance_list')
-
-@login_required
-def stop_instance(request, pk):
-    try:
-        client = docker.from_env()
-        instance = get_object_or_404(FlaskInstance, pk=pk, user=request.user)
-        if instance.container_id:
-            container = client.containers.get(instance.container_id)
-            container.stop()
-            instance.container_id = None
-            instance.save()
-            messages.success(request, "Instância parada com sucesso!")
-        else:
-            messages.warning(request, "A instância já está parada.")
-    except docker.errors.DockerException as e:
-        messages.error(request, f"Erro ao parar a instância: {e}")
-    return redirect('instance_list')
-
-@login_required
-def view_instance(request, pk):
-    instance = get_object_or_404(FlaskInstance, pk=pk, user=request.user)
-    return render(request, 'blog/instance_view.html', {'instance': instance})
-
-models.py
-from django.db import models
-from django.contrib.auth.models import User
-
-class FlaskInstance(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Usuário que criou a instância
-    container_id = models.CharField(max_length=100, blank=True, null=True)  # ID do container Docker
-    name = models.CharField(max_length=200)  # Nome da instância
-    created_at = models.DateTimeField(auto_now_add=True)  # Data de criação
-    updated_at = models.DateTimeField(auto_now=True)  # Data de atualização
-
-    def __str__(self):
-        return self.name
+/home/base/Comps/scraper_2025/opendkim.conf
+Domain  ephor.com.br
+KeyFile /etc/opendkim/keys/ephor.com.br/default.private
+Selector default
+AutoRestart yes
+Mode sv
+PidFile /var/run/opendkim/opendkim.pid
+UMask 002
+Socket inet:8891@localhost
 
 
-table inet filter {
-    chain input {
-        type filter hook input priority filter; policy drop;
-        
-        iif "lo" accept
-        ct state established,related accept
-        ip protocol icmp accept
+/home/base/Comps/scraper_2025/opendkim
+SOCKET="inet:8891@localhost"
+USER=opendkim
+GROUP=opendkim
+PIDFILE=/var/run/opendkim/opendkim.pid
 
-        # Serviços WAN permitidos na br0
-        iifname "br0" tcp dport 22 accept            
-        iifname "br0" udp dport 1194 accept          
-        iifname "br0" udp dport 4747 accept          
-        iifname "br0" tcp dport 1714-1768 accept     
-        iifname "br0" udp dport 1714-1768 accept     
-        iifname "br0" udp dport 9 accept            
-        iifname "br0" tcp dport 24800 accept        
-
-        # HTTP e HTTPS no host
-        iifname "br0" tcp dport { 80, 443 } accept
-
-        # Permitir tráfego para VM em 192.168.0.14 (incluindo 8000)
-        iifname "br0" ip daddr 192.168.0.14 tcp dport { 8000, 8080, 8443 } accept
-
-        # Rede interna br1 - abrindo portas específicas (SSH, DNS, DHCP, NFS)
-        # (descomente e adicione as portas de NFS conforme necessidade)
-        iifname "br1" udp dport { 53, 67, 111, 2049, 20048 } accept
-        iifname "br1" tcp dport { 22, 53, 111, 2049, 20048 } accept
-    }
-
-    chain forward {
-        type filter hook forward priority filter; policy accept;
-
-        iifname "br0" oifname "enp7s0" accept
-        oifname "br0" iifname "enp7s0" accept
-
-        # Comunicação interna (mantido comentado, se não desejar liberar tudo)
-        iifname "br1" accept
-        oifname "br1" accept
-        iifname "br0" oifname "br1" accept
-        iifname "br1" oifname "br0" accept
-
-        # Permitir tráfego para a VM (HTTP e HTTPS) + porta 8000
-        iifname "br0" ip daddr 192.168.0.14 tcp dport { 8000, 8080, 8443 } accept
-        iifname "br1" ip saddr 192.168.0.14 tcp dport { 8000, 8080, 8443 } accept
-    }
-
-    chain output {
-        type filter hook output priority filter; policy accept;
-
-        # Permitir saída para tráfego essencial na br1 (conforme necessidade)
-        oifname "br1" ip daddr 192.168.0.14 tcp dport { 8080, 8443 } accept
-    }
-}
+# Diretório de chaves DKIM
+RUNDIR=/var/spool/postfix/opendkim
+KEYTABLE=/etc/opendkim/key.table
+SIGNINGTABLE=/etc/opendkim/signing.table
+TRUSTEDHOSTS=/etc/opendkim/trusted.hosts
 
 
+/home/base/Comps/scraper_2025/master.cf
+submission     inet  n       -       y       -       -       smtpd
+  -o syslog_name=postfix/submission
+  -o smtpd_tls_security_level=encrypt
+  -o smtpd_sasl_auth_enable=yes
+  -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
 
 
+/home/base/Comps/scraper_2025/postfix/main.cf
+smtpd_banner = $myhostname ESMTP
+biff = no
+append_dot_mydomain = no
+readme_directory = no
+smtpd_use_tls=yes
+smtpd_tls_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem
+smtpd_tls_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+smtpd_tls_security_level = may
+smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated defer_unauth_destination
+
+myhostname = mail.ephor.com.br
+myorigin = /etc/mailname
+mydestination = localhost
+mynetworks = 127.0.0.0/8 [::1]/128 172.17.0.0/16 172.18.0.0/16 172.30.0.0/16
+relayhost =
+mailbox_size_limit = 0
+recipient_delimiter = +
+inet_interfaces = all
+inet_protocols = ipv4
+smtpd_recipient_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination
+
+milter_protocol = 2
+milter_default_action = accept
+smtpd_milters = inet:localhost:8891
+non_smtpd_milters = inet:localhost:8891
+
+maillog_file = /var/log/mail.log
 
 
+/home/base/Comps/scraper_2025/Dockerfile-postfix
+# Usar Debian como base
+FROM debian:latest
+
+# Criar usuário e grupo opendkim antes da instalação
+RUN groupadd -r opendkim && useradd -r -g opendkim -s /usr/sbin/nologin opendkim
+
+# Instalar os pacotes necessários + 'procps' (para 'ps') caso o script do OpenDKIM use
+RUN apt update && apt install -y \
+    postfix \
+    postfix-pcre \
+    opendkim \
+    opendkim-tools \
+    libsasl2-modules \
+    mailutils \
+    procps \
+    --no-install-recommends && \
+    apt clean
+
+# Criar /etc/mailname para evitar erro "cannot open file: No such file or directory" no Postfix
+RUN echo "mail.ephor.com.br" > /etc/mailname
+
+# Criar diretório para chaves DKIM (será montado da VM)
+RUN mkdir -p /etc/opendkim/keys/ephor.com.br
+
+# Copiar arquivos de configuração do OpenDKIM e Postfix
+COPY opendkim.conf /etc/opendkim.conf
+COPY opendkim /etc/default/opendkim
+COPY postfix/main.cf /etc/postfix/main.cf
+COPY master.cf /etc/postfix/master.cf
+
+# (Opcional) Checagem de chaves DKIM não é recomendável em tempo de build
+# pois serão montadas em runtime.
+# Removemos o bloco que tenta "chown" e "chmod" aqui, pois eles falharão
+# se o volume estiver em :ro ou se as chaves forem ausentes.
+
+# RUN echo "nameserver 1.1.1.1" > /etc/resolv.conf && \
+#    echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+
+# Criar diretório de logs do Postfix (opcional, mas não haverá rsyslog)
+RUN mkdir -p /var/log/mail && chown postfix:postfix /var/log/mail
+
+# Expor portas SMTP e SMTPS
+EXPOSE 25 587 465
+
+# Comando de inicialização do Postfix e OpenDKIM (SEM rsyslog)
+# Usamos 'tail -f /dev/null' para manter o container rodando indefinidamente.
+CMD service opendkim start && service postfix start && tail -f /dev/null
 
 
+/home/base/Comps/scraper_2025/docker-compose.yml
+services:
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile-django
+    container_name: django_app
+    volumes:
+      - .:/app
+      - staticfiles:/app/staticfiles
+    environment:
+      - EMAIL_HOST=postfix
+      - EMAIL_PORT=587
+      - EMAIL_USE_TLS=True
+      - EMAIL_HOST_USER=no-reply@ephor.com.br
+      - EMAIL_HOST_PASSWORD=xH3xD7jL6vX5sZ3n
+      - DJANGO_SUPERUSER_PASSWORD=zH23yA16cL2yqA76wW622jK5rrsQ
+      - DJANGO_SUPERUSER_EMAIL=jhs.importa@gmail.com
+      - DJANGO_SETTINGS_MODULE=ephor_2025.settings 
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    networks:
+      app_network:
+        ipv4_address: 172.18.0.10
+    depends_on:
+      - postfix
+    ports:
+      - "8000:8000"
 
-rm /usr/local/bin/update_nftables_docker.py ; nano /usr/local/bin/update_nftables_docker.py ; chmod +x /usr/local/bin/update_nftables_docker.py ; nft flush ruleset ; rm /etc/nftables.conf ; nano /etc/nftables.conf ; nft -f /etc/nftables.conf ; systemctl restart nftables ; nft list ruleset ; systemctl status nftables ; docker system prune -a ; docker network create --driver=bridge --subnet=172.18.0.0/16 app_network ; docker network inspect app_network ; docker network list ; ip addr show ; cat /usr/local/bin/update_nftables_docker.py ; /usr/local/bin/update_nftables_docker.py ; nft list ruleset ; cat /etc/nftables.conf ; docker-compose up --build  
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile-nginx
+    container_name: nginx_app
+    volumes:
+      - staticfiles:/usr/share/nginx/html/static:ro
+    depends_on:
+      - django
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    networks:
+      app_network:
+        ipv4_address: 172.18.0.20
+    ports:
+      - "8080:80"
+
+  postfix:
+    build:
+      context: .
+      dockerfile: Dockerfile-postfix
+    container_name: postfix
+    restart: always
+    volumes:
+      - /opt/opendkim/keys/ephor.com.br:/etc/opendkim/keys/ephor.com.br:ro
+      - ./opendkim.conf:/etc/opendkim.conf:ro
+      - ./opendkim:/etc/default/opendkim:ro
+      - ./postfix/main.cf:/etc/postfix/main.cf:ro
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    networks:
+      app_network:
+        ipv4_address: 172.18.0.30
+    ports:
+      - "25:25"
+      - "465:465"
+      - "587:587"
+
+networks:
+  app_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+
+volumes:
+  staticfiles:

@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv  # Importando para carregar variáveis do .env
+
+# Carregar variáveis do .env
+load_dotenv()
 
 # Diretório base do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.sites',
-    'django.contrib.staticfiles',  # Para servir arquivos estáticos
+    'django.contrib.staticfiles',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -107,9 +111,9 @@ USE_TZ = True
 
 # Arquivos estáticos
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Diretório onde os arquivos estáticos serão coletados
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),  # Diretório para arquivos estáticos personalizados
+    os.path.join(BASE_DIR, 'static'),
 ]
 
 # Usar ManifestStaticFilesStorage para evitar conflitos de arquivos duplicados
@@ -131,15 +135,19 @@ SITE_ID = 1
 LOGIN_REDIRECT_URL = 'instance_list'
 ACCOUNT_LOGOUT_REDIRECT_URL = 'landing_page'
 
-CSRF_TRUSTED_ORIGINS = ['https://ephor.com.br',]
+CSRF_TRUSTED_ORIGINS = ['https://ephor.com.br']
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
 # Configuração de envio de e-mails via Postfix no Docker
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'postfix'  # MESMO nome do serviço acima
-EMAIL_PORT = 587
+EMAIL_HOST = 'postfix'
+EMAIL_PORT = 25
+EMAIL_USE_SSL = False
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'no-reply@ephor.com.br'
-EMAIL_HOST_PASSWORD = 'suasenha'
+
+# Importando a senha do .env
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
 DEFAULT_FROM_EMAIL = 'no-reply@ephor.com.br'

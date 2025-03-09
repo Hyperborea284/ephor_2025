@@ -15,7 +15,7 @@ services:
       - EMAIL_HOST_PASSWORD=xH3xD7jL6vX5sZ3n
       - DJANGO_SUPERUSER_PASSWORD=zH23yA16cL2yqA76wW622jK5rrsQ
       - DJANGO_SUPERUSER_EMAIL=jhs.importa@gmail.com
-      - DJANGO_SETTINGS_MODULE=ephor_2025.settings 
+      - DJANGO_SETTINGS_MODULE=ephor_2025.settings
     dns:
       - 1.1.1.1
       - 8.8.8.8
@@ -52,10 +52,7 @@ services:
     container_name: postfix
     restart: always
     volumes:
-      - /opt/opendkim/keys/ephor.com.br:/etc/opendkim/keys/ephor.com.br:ro
-      - ./opendkim.conf:/etc/opendkim.conf:ro
-      - ./opendkim:/etc/default/opendkim:ro
-      - ./postfix-main.cf:/etc/postfix/main.cf:ro
+      - /var/log/mail:/var/log/mail
     dns:
       - 1.1.1.1
       - 8.8.8.8

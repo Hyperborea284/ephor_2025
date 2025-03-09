@@ -1,0 +1,3 @@
+default._domainkey	IN	TXT	( "v=DKIM1; h=sha256; k=rsa; "
+	  "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5qd5y7wTi5z3EGPLmGNRagpIrEseImuz0DHMXoxpRuK8Cqff4KYMcEcHfGdrZUlGuoX7BlJMxPrJSL6ghtHeWg/hogwO6jnIJW7m6mF9fQO4jfq5ko2Q8YrJmrZRc5Cn8cjcPHxrPvh2aPIOeX5A1+CP+9AjY2k0mHjdFGthcIHvm0sQMqLeI5ACYitwlsGTyLK71YiQoRr9Jw"
+	  "ew02xSKfFKZMaDe0grC5ztEiDaF5KZqKDjlXTXInRNVwrjHk+1muauE6zMg6X/bCbVEWpbVozM5DX5zDqP8rIz6+3a9kuF6zOsjC8aULF5XhcGZbBJpHoJgojHUQNZMf40fxYUIQIDAQAB" )  ; ----- DKIM key default for ephor.com.br

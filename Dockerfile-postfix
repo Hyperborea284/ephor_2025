@@ -1,10 +1,9 @@
-# Usar Debian como base
 FROM debian:latest
 
-# Criar usuário e grupo opendkim antes da instalação
+# Cria usuário e grupo para o OpenDKIM
 RUN groupadd -r opendkim && useradd -r -g opendkim -s /usr/sbin/nologin opendkim
 
-# Instalar os pacotes necessários + 'procps' (para 'ps') caso o script do OpenDKIM use
+# Instala os pacotes necessários
 RUN apt update && apt install -y \
     postfix \
     postfix-pcre \
@@ -13,35 +12,38 @@ RUN apt update && apt install -y \
     libsasl2-modules \
     mailutils \
     procps \
-    --no-install-recommends && \
-    apt clean
+    rsyslog \
+    --no-install-recommends && apt clean
 
-# Criar /etc/mailname para evitar erro "cannot open file: No such file or directory" no Postfix
+# Configuração básica do Postfix
 RUN echo "mail.ephor.com.br" > /etc/mailname
 
-# Criar diretório para chaves DKIM (será montado da VM)
+# Cria o diretório para as chaves DKIM
 RUN mkdir -p /etc/opendkim/keys/ephor.com.br
 
-# Copiar arquivos de configuração do OpenDKIM e Postfix
-COPY opendkim.conf /etc/opendkim.conf
-COPY opendkim /etc/default/opendkim
-COPY postfix-main.cf /etc/postfix/main.cf
-COPY master.cf /etc/postfix/master.cf
+# Copia arquivos de configuração do projeto para o container (corrigido conforme sua estrutura)
+COPY postfix/opendkim.conf /etc/opendkim.conf
+COPY postfix/opendkim /etc/default/opendkim
+COPY postfix/main.cf /etc/postfix/main.cf
+COPY postfix/master.cf /etc/postfix/master.cf
 
-# (Opcional) Checagem de chaves DKIM não é recomendável em tempo de build
-# pois serão montadas em runtime.
-# Removemos o bloco que tenta "chown" e "chmod" aqui, pois eles falharão
-# se o volume estiver em :ro ou se as chaves forem ausentes.
+# Copia as tabelas DKIM e a chave privada para dentro do container
+COPY dkim/key.table /etc/opendkim/key.table
+COPY dkim/signing.table /etc/opendkim/signing.table
+COPY dkim/trusted.hosts /etc/opendkim/trusted.hosts
+COPY dkim/keys/ephor.com.br/default.private /etc/opendkim/keys/ephor.com.br/default.private
 
-# RUN echo "nameserver 1.1.1.1" > /etc/resolv.conf && \
-#    echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+# Ajusta as permissões para as chaves DKIM (mantido)
+RUN chown -R opendkim:opendkim /etc/opendkim && \
+    chmod 600 /etc/opendkim/keys/ephor.com.br/default.private && \
+    chown root:opendkim /etc/opendkim && chmod 750 /etc/opendkim
 
-# Criar diretório de logs do Postfix (opcional, mas não haverá rsyslog)
-RUN mkdir -p /var/log/mail && chown postfix:postfix /var/log/mail
+# Cria diretório de logs e garante permissões adequadas para o Postfix
+RUN mkdir -p /var/log/mail && chown postfix:postfix /var/log/mail && touch /var/log/mail.log
 
-# Expor portas SMTP e SMTPS
+# Expondo as portas necessárias
 EXPOSE 25 587 465
 
-# Comando de inicialização do Postfix e OpenDKIM (SEM rsyslog)
-# Usamos 'tail -f /dev/null' para manter o container rodando indefinidamente.
-CMD service opendkim start && service postfix start && tail -f /dev/null
+# Comando de inicialização: inicia o OpenDKIM e o Postfix, e mantém o container ativo
+CMD service opendkim start && service postfix start && tail -f /var/log/mail.log
+
